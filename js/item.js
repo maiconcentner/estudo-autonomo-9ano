@@ -74,7 +74,7 @@
           b.setAttribute('aria-label', 'Certa: ' + b.textContent);
           lista.querySelectorAll('button').forEach((x) => (x.disabled = true));
           mostrarRetorno(retorno, true, o.fb || 'Isso mesmo!', o.fig);
-          fim(primeira);
+          fim(primeira, o.txt ? fmt(o.t) : `<span class="m">${o.t}</span>`);
         } else {
           primeira = false;
           b.classList.add('errada');
@@ -118,7 +118,7 @@
         campo.classList.add('certa');
         btn.remove();
         mostrarRetorno(retorno, true, parte.fbCerto || 'Isso mesmo!');
-        fim(primeira);
+        fim(primeira, `<span class="m">${EA.num(parte.resposta)}</span>`);
       } else {
         primeira = false;
         campo.classList.remove('treme');
@@ -150,16 +150,33 @@
         return;
       }
       const parte = item.partes[k++];
-      const bloco = el('div', { class: 'parte' + (k > 1 ? ' entra seguinte' : '') });
+      const bloco = el('div', { class: 'parte' + (k > 1 ? ' entra' : '') });
       raiz.append(bloco);
       const desenhar = parte.tipo === 'numero' ? parteNumero : parteEscolha;
-      desenhar(bloco, parte, op, (okParte) => {
+      if (item.partes.length > 1 && op.modo !== 'teste') {
+        bloco.prepend(el('p', { class: 'passo-n', texto: `Passo ${k} de ${item.partes.length}` }));
+      }
+      desenhar(bloco, parte, op, (okParte, resumo) => {
         if (!okParte) ok = false;
-        if (k < item.partes.length) setTimeout(proxima, op.modo === 'teste' ? 0 : 350);
-        else proxima();
+        if (k >= item.partes.length || op.modo === 'teste') return proxima();
+        // Uma pergunta por vez: o aluno lê o retorno, toca em Continuar,
+        // e a parte resolvida vira uma linha de resumo.
+        const seguir = el('button', { class: 'btn primario largo entra', type: 'button', texto: 'Continuar →' });
+        seguir.addEventListener('click', () => {
+          bloco.innerHTML = '';
+          bloco.className = 'parte resolvida entra';
+          bloco.append(el('p', {}, [
+            el('span', { class: 'ok', 'aria-hidden': 'true', texto: '✓ ' }),
+            el('span', { html: fmt(parte.resumo || parte.html) + ' ' }),
+            el('strong', { html: resumo }),
+          ]));
+          proxima();
+        });
+        bloco.append(seguir);
+        requestAnimationFrame(() => seguir.scrollIntoView({ behavior: EA.reduzMovimento() ? 'auto' : 'smooth', block: 'nearest' }));
       });
       if (k > 1) {
-        setTimeout(() => bloco.scrollIntoView({ behavior: EA.reduzMovimento() ? 'auto' : 'smooth', block: 'start' }), 60);
+        setTimeout(() => bloco.scrollIntoView({ behavior: EA.reduzMovimento() ? 'auto' : 'smooth', block: 'center' }), 60);
       }
     }
     proxima();

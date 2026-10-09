@@ -29,12 +29,14 @@
               el('span', { class: 'chip', texto: e.id }),
               el('span', { texto: e.titulo }),
             ]),
+            (this.contador = el('span', { class: 'topo-contador', 'aria-live': 'polite' })),
           ]),
           el('div', { class: 'barra-progresso', role: 'progressbar', 'aria-label': 'Progresso da etapa', 'aria-valuemin': 0, 'aria-valuemax': 100 }, this.barra),
         ]),
         this.palco,
         el('footer', { class: 'acoes' }, [this.btnVoltar, this.btnProx])
       );
+      EA.licaoAtual = this;
     }
 
     ir(i) {
@@ -43,13 +45,14 @@
       if (telas[this.i].tipo !== 'fim') EA.progresso.atualizar(this.etapa.id, { tela: this.i });
       const tela = telas[this.i];
       this.palco.innerHTML = '';
-      const bloco = el('section', { class: 'tela entra' });
+      const bloco = el('section', { class: 'tela entra tela-' + tela.tipo });
       if (tela.titulo) bloco.append(el('h2', { html: fmt(tela.titulo) }));
       this.palco.append(bloco);
       this.ctrl = EA.telas[tela.tipo](bloco, tela, this) || {};
       const pct = Math.round(((this.i + 1) / telas.length) * 100);
       this.barra.style.width = pct + '%';
       this.barra.parentNode.setAttribute('aria-valuenow', pct);
+      this.contador.textContent = `${this.i + 1}/${telas.length}`;
       window.scrollTo(0, 0);
       this.palco.focus({ preventScroll: true });
       this.atualizar();
@@ -82,6 +85,20 @@
     }
   }
 
+  // Teclado no computador: setas ou Page Up/Down (passador de slides), fora dos campos de texto.
+  document.addEventListener('keydown', (ev) => {
+    const l = EA.licaoAtual;
+    if (!l || !document.body.contains(l.palco) || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+    if (ev.key === 'ArrowRight' || ev.key === 'PageDown') {
+      ev.preventDefault();
+      l.proximo();
+    } else if (ev.key === 'ArrowLeft' || ev.key === 'PageUp') {
+      ev.preventDefault();
+      l.voltar();
+    }
+  });
+
   EA.abrirEtapa = function (raiz, id) {
     const etapa = EA.etapas[id];
     const prog = EA.progresso.etapa(id);
@@ -113,7 +130,10 @@
     const pontos = el('div', { class: 'pontos', 'aria-hidden': 'true' });
     for (let i = 0; i < n; i++) pontos.append(el('span'));
     const rever = el('button', { class: 'btn leve pequeno', type: 'button', texto: '↺ Rever movimento' });
-    bloco.append(el('div', { class: 'figura' }, f.svg), pontos, legenda, rever);
+    bloco.append(el('div', { class: 'lado-a-lado' }, [
+      el('div', { class: 'figura' }, f.svg),
+      el('div', { class: 'lado-texto' }, [pontos, legenda, rever]),
+    ]));
     let k = 0;
     function mostrar(sem) {
       f.ir(k, sem);
@@ -146,7 +166,7 @@
         }
         return false;
       },
-      rotulo: () => (k < n - 1 ? 'Próximo movimento ▶' : 'Próximo →'),
+      rotulo: () => (k < n - 1 ? 'Próximo passo ▶' : 'Próximo →'),
     };
   };
 
@@ -166,14 +186,21 @@
   EA.telas.widget = function (bloco, tela, L) {
     let feito = false;
     if (tela.html) bloco.append(el('div', { class: 'texto', html: fmt(tela.html) }));
-    EA.widgets[tela.widget](bloco, tela.p || {});
-    EA.item(bloco, tela.item, {
-      modo: 'pratica',
-      aoTerminar() {
-        feito = true;
-        L.liberar();
-      },
+    const area = el('div');
+    let mostrou = false;
+    EA.widgets[tela.widget](bloco, tela.p || {}, () => {
+      if (mostrou) return;
+      mostrou = true;
+      EA.item(area, tela.item, {
+        modo: 'pratica',
+        aoTerminar() {
+          feito = true;
+          L.liberar();
+        },
+      });
+      setTimeout(() => area.scrollIntoView({ behavior: EA.reduzMovimento() ? 'auto' : 'smooth', block: 'start' }), 80);
     });
+    bloco.append(area);
     return { pronto: () => feito };
   };
 
@@ -225,22 +252,74 @@
     return { pronto: () => terminou };
   };
 
-  // Três cartões lado a lado (empilhados no celular) para contrastar os produtos notáveis
-  EA.telas.cartoes = function (bloco, tela) {
+  // Cartões que aparecem um por toque em Próximo e ficam na tela (passos, contraste, roteiros).
+  function revelar(bloco, tela, cartoes, montarCartao, classeGrade) {
     if (tela.html) bloco.append(el('div', { class: 'texto', html: fmt(tela.html) }));
-    const grade = el('div', { class: 'cartoes' });
-    tela.cartoes.forEach((c, i) => {
-      grade.append(
-        el('article', { class: 'cartao cartao-' + c.tom + ' entra', style: `animation-delay:${i * 120}ms` }, [
-          el('h3', { class: 'm', html: c.titulo }),
-          EA.figura(c.fig),
-          el('p', { class: 'resultado', html: fmt(c.resultado) }),
-          el('p', { class: 'nota', html: fmt(c.teste) }),
-        ])
-      );
-    });
+    const grade = el('div', { class: classeGrade });
     bloco.append(grade);
-    if (tela.depois) bloco.append(el('div', { class: 'texto', html: fmt(tela.depois) }));
+    const depois = tela.depois ? el('div', { class: 'texto entra', html: fmt(tela.depois) }) : null;
+    let k = 0;
+    function mostrar() {
+      grade.innerHTML = '';
+      cartoes.slice(0, k + 1).forEach((c, i) => {
+        const card = montarCartao(c, i);
+        if (i === k) card.classList.add('entra', 'novo');
+        grade.append(card);
+      });
+      if (depois) {
+        depois.remove();
+        if (k === cartoes.length - 1) bloco.append(depois);
+      }
+      if (k > 0) {
+        const ultimo = grade.lastElementChild;
+        requestAnimationFrame(() => ultimo.scrollIntoView({ behavior: EA.reduzMovimento() ? 'auto' : 'smooth', block: 'nearest' }));
+      }
+    }
+    mostrar();
+    return {
+      podeVoltar: () => k > 0,
+      avancar() {
+        if (k < cartoes.length - 1) {
+          k++;
+          mostrar();
+          return true;
+        }
+        return false;
+      },
+      voltar() {
+        if (k > 0) {
+          k--;
+          mostrar();
+          return true;
+        }
+        return false;
+      },
+      rotulo: () => (k < cartoes.length - 1 ? 'Mostrar o próximo ▶' : 'Próximo →'),
+    };
+  }
+
+  // Três cartões de contraste, um de cada vez
+  EA.telas.cartoes = function (bloco, tela) {
+    return revelar(bloco, tela, tela.cartoes, (c) =>
+      el('article', { class: 'cartao cartao-' + c.tom }, [
+        el('h3', { class: 'm', html: c.titulo }),
+        EA.figura(c.fig),
+        el('p', { class: 'resultado', html: fmt(c.resultado) }),
+        el('p', { class: 'nota', html: fmt(c.teste) }),
+      ]), 'cartoes');
+  };
+
+  // Passo a passo (exemplo resolvido, roteiro, lembrete): um passo por toque
+  EA.telas.passos = function (bloco, tela) {
+    return revelar(bloco, tela, tela.passos, (c, i) =>
+      el('article', { class: 'passo-card' + (c.tipo ? ' passo-' + c.tipo : '') }, [
+        el('span', { class: 'passo-num', 'aria-hidden': 'true', texto: c.marca || String(i + 1) }),
+        el('div', { class: 'passo-corpo' }, [
+          c.titulo ? el('p', { class: 'passo-titulo', html: fmt(c.titulo) }) : null,
+          el('div', { html: fmt(c.html) }),
+          c.fig ? EA.figura(c.fig) : null,
+        ]),
+      ]), 'passos-lista');
   };
 
   // Domínio: itens mistos gerados até o aluno cumprir o critério.
@@ -329,20 +408,29 @@
 
   // ---------------- Widgets ----------------
 
-  // Pátio com controle de x: três contas ao vivo
-  EA.widgets.patio = function (bloco, p) {
+  // Pátio com controle de x: três contas ao vivo e uma tabela com os valores testados.
+  // A pergunta só aparece depois de 3 valores diferentes.
+  EA.widgets.patio = function (bloco, p, liberar) {
     const A = p.A || 12;
+    const MIN = 3;
     let x = p.x != null ? p.x : 4;
+    const testados = new Map();
     const f = EA.fig.patio.criar({ A, x, rot: { a: A + ' m', b: 'x' } });
     const valorX = el('output', { class: 'valor-x' });
     const faixa = el('input', { type: 'range', min: 0, max: A, step: 1, value: x, 'aria-label': 'Lado x do canteiro' });
     const menos = el('button', { class: 'btn redondo', type: 'button', 'aria-label': 'Diminuir x', texto: '−' });
     const mais = el('button', { class: 'btn redondo', type: 'button', 'aria-label': 'Aumentar x', texto: '+' });
     const linhas = el('div', { class: 'contas' });
+    const aviso = el('p', { class: 'faca', 'aria-live': 'polite' });
+    const tabela = el('div', { class: 'tabela-x' });
     bloco.append(
-      el('div', { class: 'figura compacta' }, f.svg),
-      el('div', { class: 'controle' }, [menos, el('div', { class: 'faixa' }, [valorX, faixa]), mais]),
-      linhas
+      el('div', { class: 'lado-a-lado' }, [
+        el('div', {}, [
+          el('div', { class: 'figura compacta' }, f.svg),
+          el('div', { class: 'controle' }, [menos, el('div', { class: 'faixa' }, [valorX, faixa]), mais]),
+        ]),
+        el('div', {}, [linhas, aviso, tabela]),
+      ])
     );
     const q = A * A;
     function conta(rotulo, valor, real, ref) {
@@ -350,10 +438,30 @@
       return el('div', { class: 'conta' + (ref ? ' ref' : bate ? ' bate' : ' naobate') }, [
         el('span', { class: 'm conta-expr', html: rotulo }),
         el('span', { class: 'conta-val', texto: EA.num(valor) }),
-        el('span', { class: 'conta-tag', texto: ref ? 'piso de verdade' : bate ? '✓ bate' : '✗ não bate' }),
+        el('span', { class: 'conta-tag', texto: ref ? 'piso de verdade' : bate ? '✓ bate com o piso' : '✗ não bate' }),
       ]);
     }
-    function atualizar() {
+    function desenharTabela() {
+      tabela.innerHTML = '';
+      if (!testados.size) return;
+      const t = el('table', {}, [
+        el('caption', { texto: 'Valores que você testou' }),
+        el('thead', {}, el('tr', {}, ['x', `${q} − x²`, `(${A} − x)²`, `(${A} − x)(${A} + x)`].map((h) => el('th', { class: 'm', scope: 'col', texto: h })))),
+      ]);
+      const corpo = el('tbody');
+      [...testados.keys()].sort((a, b) => a - b).forEach((v) => {
+        const real = q - v * v, quad = (A - v) * (A - v), prod = (A - v) * (A + v);
+        corpo.append(el('tr', {}, [
+          el('td', { texto: v }),
+          el('td', { texto: EA.num(real) }),
+          el('td', { class: quad === real ? 'bate' : 'naobate', texto: EA.num(quad) + (quad === real ? ' ✓' : ' ✗') }),
+          el('td', { class: prod === real ? 'bate' : 'naobate', texto: EA.num(prod) + (prod === real ? ' ✓' : ' ✗') }),
+        ]));
+      });
+      t.append(corpo);
+      tabela.append(t);
+    }
+    function atualizar(mexeu) {
       f.mudar(x);
       faixa.value = x;
       valorX.textContent = 'x = ' + x + ' m';
@@ -364,20 +472,27 @@
         conta(`(${A} − x)²`, (A - x) * (A - x), real),
         conta(`(${A} − x)(${A} + x)`, (A - x) * (A + x), real)
       );
-      linhas.append(el('p', { class: 'nota', texto: x === 0 || x === A ? 'Nas pontas os valores coincidem. Teste outros valores de x.' : 'Mude x e veja qual conta acompanha o piso de verdade.' }));
+      if (mexeu) testados.set(x, true);
+      desenharTabela();
+      const falta = MIN - testados.size;
+      if (falta > 0) aviso.textContent = `▶ Faça: teste ${falta === MIN ? 'pelo menos 3 valores' : 'mais ' + falta + (falta === 1 ? ' valor' : ' valores')} de x. Use os botões − e +.`;
+      else {
+        aviso.textContent = 'Olhe a tabela: qual coluna sempre bate com o piso? Responda logo abaixo.';
+        liberar();
+      }
     }
     faixa.addEventListener('input', () => {
       x = Number(faixa.value);
-      atualizar();
+      atualizar(true);
     });
     menos.addEventListener('click', () => {
       x = Math.max(0, x - 1);
-      atualizar();
+      atualizar(true);
     });
     mais.addEventListener('click', () => {
       x = Math.min(A, x + 1);
-      atualizar();
+      atualizar(true);
     });
-    atualizar();
+    atualizar(false);
   };
 })();

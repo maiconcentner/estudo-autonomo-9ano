@@ -436,3 +436,89 @@ input.num.treme { animation: treme .35s; border-color: var(--errado); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ================= Revisão didática: mais passos, notebook e etiquetas ================= */
+
+/* Contador de telas no topo */
+.topo-contador { margin-left: auto; color: var(--suave); font-weight: 700; font-size: .95rem; white-space: nowrap; }
+
+/* Etiquetas fixas por tipo de texto (mesma cor, ícone e palavra; não depende só da cor) */
+.pergunta::before, .faca::before, .regra::before {
+  display: block; width: fit-content;
+  font: 800 .8rem/1.6 system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase;
+  padding: 0 8px; border-radius: 6px; margin-bottom: 4px;
+}
+.pergunta::before { content: "? Pergunta"; background: var(--dica-fundo); color: var(--tinta); }
+.regra::before { content: "★ Ideia"; background: var(--acento); color: var(--acento-tinta); margin: 0 auto 8px; }
+.faca { font-weight: 700; background: var(--certo-fundo); border-radius: 12px; padding: 10px 14px; }
+.faca::before { content: "▶ Faça"; background: var(--certo); color: var(--cartao); }
+
+/* Partes de um item: uma por vez, a anterior vira resumo */
+.passo-n { color: var(--suave); font-weight: 800; font-size: .95rem; margin: 0 0 4px; }
+.parte.resolvida { background: var(--certo-fundo); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; }
+.parte.resolvida p { margin: 0; }
+.parte.resolvida .ok { color: var(--certo); font-weight: 900; }
+.parte + .parte:not(.resolvida) { margin-top: 8px; }
+
+/* Passo a passo em cartões numerados */
+.passos-lista { display: grid; gap: 10px; }
+.passo-card {
+  display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start;
+  background: var(--cartao); border: 2px solid var(--borda); border-radius: 14px; padding: 12px;
+}
+.passo-card.novo { border-color: var(--acento); }
+.passo-card:not(.novo) { opacity: .85; }
+.passo-num {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 900;
+  background: var(--acento); color: var(--acento-tinta);
+}
+.passo-titulo { font-weight: 800; margin-bottom: .2em; }
+.passo-corpo > div > :last-child { margin-bottom: 0; }
+.passo-corpo .figura { max-width: 230px; margin-bottom: 0; }
+.passo-atencao { border-style: dashed; border-color: var(--errado); }
+.passo-atencao .passo-num { background: var(--errado); color: var(--cartao); }
+.passo-ok .passo-num { background: var(--certo); color: var(--cartao); }
+
+/* Quadrados perfeitos */
+.quadrados { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.quadrados span { border: 2px solid var(--borda); border-radius: 10px; padding: 2px 8px; background: var(--fundo); }
+
+/* Tabela do pátio */
+.tabela-x { overflow-x: auto; }
+.tabela-x table { width: 100%; border-collapse: collapse; font-size: .95rem; margin-top: 4px; }
+.tabela-x caption { text-align: left; font-weight: 800; padding-bottom: 4px; }
+.tabela-x th, .tabela-x td { border: 1px solid var(--borda); padding: 6px 4px; text-align: center; }
+.tabela-x th { background: var(--acento-claro); font-size: .95rem; white-space: normal; }
+.tabela-x td.bate { color: var(--certo); font-weight: 800; }
+.tabela-x td.naobate { color: var(--errado); text-decoration: line-through; }
+
+/* Figuras: novos elementos */
+.fig .interrog { font-size: 40px; fill: var(--errado); }
+.fig .quadradinhos line { stroke: var(--tinta); stroke-width: 1; opacity: .4; }
+.fig .grade-cheia { stroke: var(--tinta); stroke-width: 1.4; opacity: .5; }
+.fig .corte { stroke: var(--tinta); stroke-width: 3; stroke-dasharray: 9 6; }
+.fig .marca-canto { fill: var(--errado); opacity: .45; stroke: var(--errado); stroke-width: 3; transition: opacity .4s; }
+.fig .marca-canto.oculta { opacity: 0; }
+.fig .peca.falta .contorno { stroke: var(--errado); stroke-width: 4; stroke-dasharray: 9 6; }
+
+/* Notebook e computador: figura ao lado do texto, cabe sem rolar */
+@media (min-width: 900px) {
+  .palco { max-width: 1040px; }
+  .tela-texto, .tela-regra, .tela-item, .tela-teste, .tela-dominio, .tela-fim, .tela-passos { max-width: 760px; margin: 0 auto; }
+  .lado-a-lado { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .lado-a-lado .figura { max-width: none; width: 100%; margin: 0; }
+  .lado-a-lado .figura.compacta { margin: 0 auto; }
+  .lado-a-lado .figura.compacta { max-width: 340px; }
+  .lado-texto { position: sticky; top: 90px; }
+  .tela-anim .fig { max-height: calc(100vh - 230px); }
+  .legenda { font-size: 1.2rem; }
+  .cartoes { grid-template-columns: repeat(3, 1fr); }
+  .acoes { width: 1040px; }
+}
+@media (min-width: 760px) and (max-width: 1080px) {
+  .acoes { width: calc(100% - 32px); }
+}
+
+.fig .tardia:not(.oculta) { transition-delay: .85s; }
+.tabela-x { margin-bottom: 18px; }
