@@ -176,7 +176,7 @@ strong { font-weight: 800; }
 .logo .lg-b { fill: var(--peca-b); }
 .titulo-pagina { margin-top: 8px; }
 
-.hero { display: grid; gap: 18px; margin: 8px 0 28px; }
+.hero { margin: 8px 0 20px; }
 .hero-texto p { color: var(--suave); font-size: 1.08rem; max-width: 34em; }
 .marca-texto {
   background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--destaque) 45%, transparent) 60%);
@@ -187,6 +187,7 @@ strong { font-weight: 800; }
 
 .continuar {
   display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 22px;
   background: var(--cartao);
   border: 2px solid var(--acento);
   border-radius: 22px;
@@ -273,7 +274,8 @@ a.continuar:active { transform: scale(.99); }
 .etapa-meta .cod { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; color: var(--tinta); }
 .etapa-acao { font-weight: 900; color: var(--acento); }
 
-.como { margin-top: 32px; }
+.como { margin-bottom: 22px; }
+.como h2 { font-size: 1.15rem; }
 .como-lista { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .como-lista li { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 14px; display: grid; gap: 2px; font-size: .95rem; color: var(--suave); }
 .como-lista strong { color: var(--tinta); font-size: 1.02rem; }
@@ -286,10 +288,17 @@ a.continuar:active { transform: scale(.99); }
 
 @media (min-width: 900px) {
   .pagina { padding: 20px 32px 64px; }
-  .hero { grid-template-columns: 1.25fr 1fr; gap: 40px; align-items: center; margin: 24px 0 40px; }
+  .abertura { display: grid; grid-template-columns: 1fr 1.15fr; gap: 40px; align-items: center; margin: 24px 0 28px; }
+  .abertura .hero, .abertura .como { margin: 0; }
+  .continuar { display: grid; grid-template-columns: 1fr minmax(220px, 280px); grid-template-areas: "rot btn" "linha btn" "barra btn"; column-gap: 28px; row-gap: 8px; align-items: center; margin-bottom: 28px; }
+  .continuar-rotulo { grid-area: rot; }
+  .continuar-linha { grid-area: linha; }
+  .continuar .barrinha { grid-area: barra; }
+  .continuar .btn { grid-area: btn; margin: 0; }
+  .continuar.feito { display: flex; }
   .trilhas { grid-template-columns: 1.6fr 1fr; gap: 24px; }
   .trilha { padding: 24px; }
-  .como-lista { grid-template-columns: repeat(4, 1fr); }
+  .como-lista { grid-template-columns: 1fr 1fr; }
 }
 
 /* ================= Cartões genéricos ================= */

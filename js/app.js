@@ -99,7 +99,6 @@
           el('li', { texto: '🔒 nada sai do aparelho' }),
         ]),
       ]),
-      destaque,
     ]);
 
     const lista = el('div', { class: 'trilhas' });
@@ -147,8 +146,8 @@
       lista.append(card);
     });
 
-    const como = el('section', { class: 'como' }, [
-      el('h2', { texto: 'Como funciona' }),
+    const como = el('section', { class: 'como', 'aria-labelledby': 'como-titulo' }, [
+      el('h2', { id: 'como-titulo', texto: 'Como funciona' }),
       el('ol', { class: 'como-lista' }, [
         el('li', {}, [el('span', { class: 'como-ic', texto: '👀' }), el('strong', { texto: 'Veja' }), el('span', { texto: 'As figuras se movem um passo por toque. Dá para rever.' })]),
         el('li', {}, [el('span', { class: 'como-ic', texto: '✍️' }), el('strong', { texto: 'Tente' }), el('span', { texto: 'Errou? A resposta explica o seu erro e você tenta de novo.' })]),
@@ -173,7 +172,7 @@
       ]),
     ]);
 
-    app.append(el('div', { class: 'pagina pagina-inicio' }, [cab, hero, lista, como, rodape]));
+    app.append(el('div', { class: 'pagina pagina-inicio' }, [cab, el('div', { class: 'abertura' }, [hero, como]), destaque, lista, rodape]));
   }
 
   function professor() {
