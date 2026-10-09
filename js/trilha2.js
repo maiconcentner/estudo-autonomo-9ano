@@ -292,8 +292,6 @@
   // ------------------------------------------------------------------
   // 2C. Calcular e conferir (escada e domínio)
   // ------------------------------------------------------------------
-  const ponte = tri({ m: 18, n: 32, rotulos: { m: '18 m', n: '32 m', c: '?' }, destaque: ['c'] });
-
   const etapa2C = {
     id: '2C',
     titulo: 'Calcular e conferir',
@@ -304,31 +302,31 @@
       {
         tipo: 'passos',
         titulo: 'Exemplo resolvido: a altura',
-        html: 'As projeções medem $m = 4$ e $n = 9$. Quanto mede a altura? Um passo por toque.',
+        html: 'As projeções medem $m = 2$ e $n = 8$. Quanto mede a altura? Um passo por toque.',
         passos: [
-          { titulo: 'O que a pergunta pede?', html: 'A altura $h$.', fig: tri({ m: 4, n: 9, rotulos: { m: '4', n: '9', h: '?' }, destaque: ['h'] }) },
+          { titulo: 'O que a pergunta pede?', html: 'A altura $h$.', fig: tri({ m: 2, n: 8, rotulos: { m: '2', n: '8', h: '?' }, destaque: ['h'] }) },
           { titulo: 'Qual relação?', html: 'Altura com as duas projeções: $h² = m · n$.' },
-          { titulo: 'A conta', html: '$h² = 4 · 9 = 36$.' },
-          { titulo: 'Atenção', tipo: 'atencao', marca: '!', html: '$36$ é $h²$, não $h$. Falta a raiz: que número vezes ele mesmo dá $36$?' },
-          { titulo: 'Resposta', tipo: 'ok', marca: '✓', html: '$h = 6$, porque $6 · 6 = 36$.' },
+          { titulo: 'A conta', html: '$h² = 2 · 8 = 16$.' },
+          { titulo: 'Atenção', tipo: 'atencao', marca: '!', html: '$16$ é $h²$, não $h$. Falta a raiz: que número vezes ele mesmo dá $16$?' },
+          { titulo: 'Resposta', tipo: 'ok', marca: '✓', html: '$h = 4$, porque $4 · 4 = 16$.' },
         ],
       },
       {
         tipo: 'item',
         titulo: 'Você completa: a altura',
         item: {
-          contexto: 'As projeções medem $m = 2$ e $n = 8$.',
-          fig: tri({ m: 2, n: 8, rotulos: { m: '2', n: '8', h: '?' }, destaque: ['h'] }),
+          contexto: 'As projeções medem $m = 4$ e $n = 9$.',
+          fig: tri({ m: 4, n: 9, rotulos: { m: '4', n: '9', h: '?' }, destaque: ['h'] }),
           partes: [
             escolha('Qual relação dá a altura?', [
               { t: 'h² = m · n', certo: true }, { t: 'h = m + n', fb: '$m + n$ é a hipotenusa inteira.' }, { t: 'h = n − m', fb: 'A diferença das projeções não é lado de nada.' },
             ], null, { resumo: 'Relação:' }),
-            numero('Quanto é $m · n = 2 · 8$?', 16, { resumo: '$h² =$', dicas: ['Multiplique.', '$2 · 8$.', '$16$.'] }),
-            numero('Então quanto mede $h$?', 4, {
+            numero('Quanto é $m · n = 4 · 9$?', 36, { resumo: '$h² =$', erros: { 13: 'É multiplicação: $4 · 9$.' }, dicas: ['Multiplique.', '$4 · 9$.', '$36$.'] }),
+            numero('Então quanto mede $h$?', 6, {
               resumo: '$h =$',
-              fbCerto: '$4 · 4 = 16$. Isso!',
-              erros: { 16: '$16$ é $h²$. Falta a raiz: que número vezes ele mesmo dá $16$?', 8: 'Não é a metade. Que número vezes ele mesmo dá $16$?' },
-              dicas: ['Que número vezes ele mesmo dá 16?', '$4 · 4 = ?$', '$4$.'],
+              fbCerto: '$6 · 6 = 36$. Isso!',
+              erros: { 36: '$36$ é $h²$. Falta a raiz: que número vezes ele mesmo dá $36$?', 18: 'Não é a metade. Que número vezes ele mesmo dá $36$?' },
+              dicas: ['Que número vezes ele mesmo dá 36?', '$6 · 6 = ?$', '$6$.'],
             }),
           ],
         },
@@ -350,11 +348,22 @@
         item: {
           tags: ['cateto'],
           contexto: 'A hipotenusa mede $25$ e a projeção do cateto $c$ mede $9$.',
-          fig: tri({ m: 9, n: 16, rotulos: { a: '25', m: '9', c: '?' }, destaque: ['c'] }),
           partes: [
-            escolha('A pergunta pede o quê?', [
-              { t: 'Um cateto', txt: true, certo: true }, { t: 'A altura', txt: true, fb: 'Olhe o segmento marcado com ?: ele forma o ângulo reto. É um cateto.' }, { t: 'Uma projeção', txt: true, fb: 'A projeção é o 9, que já foi dado.' },
-            ], null, { resumo: 'Pede:' }),
+            {
+              tipo: 'toque',
+              html: 'A pergunta pede o cateto $c$, o lado $AB$. <strong>Toque nele</strong> na figura.',
+              fig: { m: 9, n: 16, rotulos: { a: '25', m: '9' } },
+              alvos: ['m', 'n', 'b', 'c', 'h'],
+              alvo: 'c',
+              fb: {
+                h: 'Essa é a <strong>altura</strong> $AH$. O cateto forma o ângulo reto.',
+                m: 'Essa é a projeção $m = 9$, a sombra do cateto. O cateto sobe até $A$.',
+                n: 'Essa é a outra projeção, $n$.',
+                b: 'Esse é o cateto $AC$. Veja as letras: $AB$ liga $A$ até $B$.',
+              },
+              fbCerto: 'Isso: o cateto $AB$. A sombra dele é o 9.',
+              resumo: 'Pede:',
+            },
             escolha('Qual relação?', [
               { t: 'c² = a · m', certo: true }, { t: 'h² = m · n', fb: 'Essa dá a altura, não o cateto!' }, { t: 'a · h = b · c', fb: 'Você não conhece $h$ nem $b$.' },
             ], null, { resumo: 'Relação:' }),
@@ -379,8 +388,22 @@
         item: {
           tags: ['cateto'],
           contexto: 'Uma ponte de madeira tem a forma de um triângulo com ângulo reto no topo. A base, de $50$ m, é dividida em $18$ m e $32$ m pela coluna que desce do topo até a base.',
-          fig: ponte,
           partes: [
+            {
+              tipo: 'toque',
+              html: 'Antes de calcular: <strong>toque no menor lado inclinado</strong> da ponte.',
+              fig: { m: 18, n: 32, rotulos: { m: '18 m', n: '32 m' } },
+              alvos: ['m', 'n', 'b', 'c', 'h'],
+              alvo: 'c',
+              fb: {
+                h: 'Essa é a coluna, a <strong>altura</strong>. Ela é vertical, não inclinada. Calcular ela no lugar do lado foi o erro mais comum!',
+                m: 'Esse é o trecho de 18 m da base: a <strong>sombra</strong> do lado, não o lado.',
+                n: 'Esse é o trecho de 32 m da base, deitado.',
+                b: 'Esse é o lado inclinado <strong>maior</strong>.',
+              },
+              fbCerto: 'Isso: é um cateto, o lado do trecho de 18 m. Agora dá para escolher a relação.',
+              resumo: 'Lado pedido:',
+            },
             escolha('Quanto mede o <strong>menor lado inclinado</strong> da ponte?', [
               { t: '30 m', certo: true, fb: 'Isso. $c² = 50 · 18 = 900$, então $c = 30$.' },
               { t: '24 m', fb: '$24$ é a <strong>altura</strong> (a coluna): $√(18 · 32) = 24$. Esse segmento é o lado inclinado? Não: a pergunta pede um cateto.', fig: tri({ m: 18, n: 32, destaque: ['h'], rotulos: { h: '24 é este' } }) },
@@ -523,8 +546,8 @@
         ? `${C.intro} ${maiusc(C.a)} mede $${num(t.a)}$ m e ${C.m} mede $${num(t.m)}$ m. Quanto mede ${C.c}?`
         : `A hipotenusa mede $${num(t.a)}$ e a projeção do cateto $c$ mede $${num(t.m)}$. Quanto mede $c$?`;
       return { tags: ['cateto'], fig: tri(f), partes: [escolha(pergunta, alternativas(t.c, [
-        { v: t.h, fb: `$${num(t.h)}$ é a <strong>altura</strong> ($h² = m · n$). Esse segmento é o que a pergunta pede? Não: é um cateto.`, fig: tri(fE1) },
-        { v: t.n - t.m, fb: 'A diferença entre os trechos da hipotenusa não é lado de nada.' },
+        { v: t.h, fb: `$${num(t.h)}$ é a <strong>altura</strong> ($h² = m · n$). Esse segmento é o que a pergunta pede? Não: é um cateto. Se você já tem a altura, dá para usar Pitágoras no triângulo menor: $c² = h² + m²$.`, fig: tri(fE1) },
+        { v: t.n - t.m, fb: 'A diferença entre os trechos da hipotenusa não é lado de nada.', fig: tri(Object.assign({}, f, { destaque: ['m', 'n'], rotulos: { m: num(t.m), n: num(t.n) } })) },
         { v: t.m, fb: `$${num(t.m)}$ é a sombra do cateto, não o cateto.` },
         { v: t.a, fb: 'Essa é a hipotenusa inteira. O cateto é menor que ela.' },
       ], C ? ' m' : ''), ['Cateto: $c² = a · m$.', `$c² = ${num(t.a)} · ${num(t.m)} = ${num(t.c * t.c)}$.`, `$c = ${num(t.c)}$.`])] };

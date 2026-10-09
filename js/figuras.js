@@ -397,7 +397,8 @@
 
       const inteiro = PG([P.A, P.B, P.C], 'tri-fundo');
       const azul = PG([P.A, P.B, P.H], 'tri-azul');
-      const laranja = PG([P.A, P.H, P.C], 'tri-laranja');
+      const laranja = s('g', {}, [PG([P.A, P.H, P.C], 'tri-laranja'), PG([P.A, P.H, P.C], 'tri-textura')]);
+      laranja.lastChild.setAttribute('fill', `url(#${svg._id}l)`);
       svg.append(inteiro, azul, laranja);
 
       const linhas = {};
@@ -515,7 +516,7 @@
         arco(A, v2.sub(H, A), Math.PI / 2 - beta, 0.8, true),
       ]);
       const laranja = s('g', { class: 'tri-movel' }, [
-        PG([A, H, C], 'tri-laranja forte'), reto(H, v2.sub(A, H), v2.sub(C, H)), arco(C, [-1, 0], gamma, 0.8, true),
+        PG([A, H, C], 'tri-laranja forte'), PG([A, H, C], 'tri-textura'), reto(H, v2.sub(A, H), v2.sub(C, H)), arco(C, [-1, 0], gamma, 0.8, true),
         arco(A, v2.sub(H, A), -(Math.PI / 2 - gamma), 0.8, false),
       ]);
       // movimento rígido: ponto' = O + F(R(ponto − pivô))
@@ -591,6 +592,7 @@
         const t = T(d[lado][0], d[lado][1], letra, 'rot rot-seg' + (marcados.has(tri + ':' + letra) ? ' marca-lado' : ''));
         medidas.append(t);
       }));
+      laranja.querySelector('.tri-textura').setAttribute('fill', `url(#${svg._id}l)`);
       svg.append(grande, ladosG, altG, angG, legendaAng, letrasG, azul, laranja, medidas);
       const ir = (k, sem) => {
         mostra(altG, k >= 1);

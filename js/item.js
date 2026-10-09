@@ -64,6 +64,7 @@
           lista.querySelectorAll('button').forEach((x) => (x.disabled = true));
           b.classList.add('escolhida');
           marca.textContent = '•';
+          parte._escolhida = o;
           fim(!!o.certo);
           return;
         }
@@ -87,7 +88,52 @@
       lista.append(b);
     });
     bloco.append(lista, retorno);
-    if (parte.dicas && op.modo !== 'teste') bloco.append(dicas(parte.dicas));
+    const d = parte.dicas || dicasPadrao(parte);
+    if (d && op.modo !== 'teste') bloco.append(dicas(d));
+  }
+
+  // Dica em três degraus para partes sem dica escrita: pista, pista maior e solução comentada
+  // (a solução usa o próprio retorno da resposta certa). Perguntas de sim ou não ficam sem.
+  function dicasPadrao(parte) {
+    const txt = (h) => String(h || '').replace(/<br>.*$/, '');
+    if (parte.tipo === 'numero') {
+      return [
+        'Leia de novo o que a pergunta pede e escreva a conta antes de calcular.',
+        'Faça a conta em partes, um número de cada vez. Se tiver quadrado, multiplique o número por ele mesmo.',
+        `Solução comentada: a resposta é $${EA.num(parte.resposta)}$.${parte.fbCerto ? ' ' + txt(parte.fbCerto) : ''}`,
+      ];
+    }
+    if (!parte.opcoes || parte.opcoes.length <= 2) return null;
+    const certa = parte.opcoes.find((o) => o.certo);
+    return [
+      'Leia de novo o que a pergunta pede. Olhe a figura, se tiver.',
+      'Descarte as alternativas que você já sabe que estão erradas e compare as que sobraram.',
+      `Solução comentada: ${certa.txt ? certa.t : '$' + certa.t + '$'}.${certa.fb ? ' ' + txt(certa.fb) : ''}`,
+    ];
+  }
+
+  // Marcar no desenho: o aluno toca no segmento que a pergunta pede (trilha 2, diagnóstico 5.6)
+  function parteToque(bloco, parte, op, fim) {
+    if (parte.html) bloco.append(el('p', { class: 'pergunta', html: fmt(parte.html) }));
+    const f = EA.fig.triRet.criar(Object.assign({}, parte.fig, { alvos: parte.alvos || ['a', 'b', 'c', 'h'] }));
+    const retorno = el('div', { class: 'retorno', 'aria-live': 'polite' });
+    bloco.append(el('div', { class: 'figura' }, f.svg), el('p', { class: 'nota', texto: 'Toque no segmento da figura.' }), retorno);
+    let primeira = true, ok = false;
+    f.aoTocar((q) => {
+      if (ok) return;
+      if (q === parte.alvo) {
+        ok = true;
+        f.marcar(q, 'certo');
+        mostrarRetorno(retorno, true, parte.fbCerto || 'Isso. Agora você sabe o que vai calcular.');
+        fim(primeira, EA.nomeSeg[q]);
+      } else {
+        primeira = false;
+        f.marcar(q, 'errado');
+        mostrarRetorno(retorno, false, ((parte.fb && parte.fb[q]) || `Esse é ${EA.nomeSeg[q]}.`) + ' Toque em outro segmento.');
+      }
+    });
+    const d = parte.dicas || ['Volte ao enunciado: que segmento a pergunta pede?', 'Procure o ângulo reto. Os lados que formam ele são catetos; a altura fica dentro do triângulo.', `Solução: é ${EA.nomeSeg[parte.alvo]}.`];
+    bloco.append(dicas(d));
   }
 
   function parteNumero(bloco, parte, op, fim) {
@@ -133,7 +179,8 @@
       if (e.key === 'Enter') conferir();
     });
     bloco.append(el('div', { class: 'numlinha' }, [campo, btn]), retorno);
-    if (parte.dicas && op.modo !== 'teste') bloco.append(dicas(parte.dicas));
+    const d = parte.dicas || dicasPadrao(parte);
+    if (d && op.modo !== 'teste') bloco.append(dicas(d));
   }
 
   // Desenha um item (várias partes em sequência). aoTerminar recebe { ok, tags, tipo }.
@@ -152,7 +199,7 @@
       const parte = item.partes[k++];
       const bloco = el('div', { class: 'parte' + (k > 1 ? ' entra' : '') });
       raiz.append(bloco);
-      const desenhar = parte.tipo === 'numero' ? parteNumero : parteEscolha;
+      const desenhar = parte.tipo === 'numero' ? parteNumero : parte.tipo === 'toque' ? parteToque : parteEscolha;
       if (item.partes.length > 1 && op.modo !== 'teste') {
         bloco.prepend(el('p', { class: 'passo-n', texto: `Passo ${k} de ${item.partes.length}` }));
       }

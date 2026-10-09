@@ -15,7 +15,7 @@ Segue os princípios dos projetos *Relações Métricas Dinâmicas* e *Fábrica 
 | | 2B | D27 | De onde vêm as relações: a altura corta o triângulo em três semelhantes, que giram e viram um passo por toque; proporções com lados correspondentes destacados; como escolher a relação. |
 | | 2C | D27 | Calcular e conferir: exemplo resolvido, você completa, a ponte com a armadilha da altura (erro de 40%), Bruno, caminho ao contrário, decimais; treino misto até 4 de 5, com 2 pedindo cateto. |
 
-A conferência de cada ponto do diagnóstico está em [`docs/analise-didatica.md`](docs/analise-didatica.md).
+A conferência de cada ponto do diagnóstico está em [`docs/analise-didatica.md`](docs/analise-didatica.md), e o cruzamento com o diagnóstico e a planilha de acompanhamento está em [`docs/cruzamento-diagnostico.md`](docs/cruzamento-diagnostico.md).
 
 ## Como funciona para o aluno
 

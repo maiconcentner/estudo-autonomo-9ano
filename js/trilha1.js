@@ -31,13 +31,13 @@
         seErrar: 'Sem problema. Agora vamos ver isso com peças, um passo de cada vez.',
         itens: [
           { partes: [escolha('Quanto é $(x + 4)²$?', [
-            { t: 'x² + 8x + 16', certo: true }, { t: 'x² + 16' }, { t: 'x² + 4x + 16' }, { t: 'x² − 8x + 16' },
+            { t: 'x² + 8x + 16', certo: true }, { t: 'x² + 16', fb: 'Faltaram as duas peças do meio, $4x + 4x = 8x$.' }, { t: 'x² + 4x + 16', fb: 'O meio é dobrado: $2 · 4 · x = 8x$.' }, { t: 'x² − 8x + 16', fb: 'É uma soma: o termo do meio é positivo.' },
           ])] },
           { partes: [escolha('Um quadrado tem lado $3m + 2$. Qual é a área dele?', [
-            { t: '9m² + 12m + 4', certo: true }, { t: '9m² + 4' }, { t: '3m² + 12m + 4' }, { t: '9m² + 6m + 4' },
+            { t: '9m² + 12m + 4', certo: true }, { t: '9m² + 4', fb: 'Faltaram as duas peças do meio, $2 · 3m · 2 = 12m$.' }, { t: '3m² + 12m + 4', fb: 'O 3 também vai ao quadrado: $(3m)² = 9m²$.' }, { t: '9m² + 6m + 4', fb: 'O meio é dobrado: $2 · 3m · 2 = 12m$.' },
           ])] },
           { partes: [escolha('Um quadrado tem área $16t² + 24t + 9$. Quanto mede o lado?', [
-            { t: '4t + 3', certo: true }, { t: '16t + 9' }, { t: '4t − 3' }, { t: '4t² + 3' },
+            { t: '4t + 3', certo: true }, { t: '16t + 9', fb: '$16t²$ e $9$ são áreas. Os lados são $4t$ e $3$.' }, { t: '4t − 3', fb: 'O meio é $+24t$, positivo: é soma.' }, { t: '4t² + 3', fb: 'O lado da peça $16t²$ é $4t$, sem quadrado.' },
           ])] },
         ],
       },

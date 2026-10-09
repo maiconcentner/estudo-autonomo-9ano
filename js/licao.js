@@ -269,12 +269,25 @@
     function resultado() {
       terminou = true;
       const tudo = acertos === n;
+      // Revisão: cada pergunta do teste com o retorno da resposta dada
+      const revisao = el('div', { class: 'revisao' }, [el('p', { class: 'passo-titulo', texto: 'Confira suas respostas' })]);
+      tela.itens.forEach((it, i) => {
+        const pt = it.partes[0], esc = pt._escolhida || {}, certa = pt.opcoes.find((o) => o.certo);
+        const m = (o) => (o.txt ? o.t : `<span class="m">${o.t}</span>`);
+        revisao.append(el('div', { class: 'revisao-item ' + (esc.certo ? 'ok' : 'nao') }, [
+          el('p', { html: `<strong>${i + 1}.</strong> ${fmt(pt.html)}` }),
+          el('p', { html: (esc.certo ? '✓ Você marcou ' : '✗ Você marcou ') + m(esc) + (esc.certo ? '.' : `. A certa é ${m(certa)}.`) }),
+          !esc.certo && esc.fb ? el('p', { class: 'nota', html: fmt(esc.fb) }) : null,
+        ]));
+      });
+
       area.append(
         el('div', { class: 'cartao destaque entra' }, [
           el('p', { class: 'grande', texto: `Você acertou ${acertos} de ${n}.` }),
           el('p', { html: fmt(tudo ? tela.seAcertarTudo : tela.seErrar) }),
         ])
       );
+      area.append(revisao);
       if (tudo) {
         const fim = L.etapa.telas.findIndex((t) => t.tipo === 'fim');
         area.append(
