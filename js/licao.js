@@ -20,6 +20,20 @@
       this.btnVoltar = el('button', { class: 'btn', type: 'button', texto: '← Voltar', onclick: () => this.voltar() });
       this.btnProx = el('button', { class: 'btn primario', type: 'button', texto: 'Próximo →', onclick: () => this.proximo() });
       this.palco = el('main', { class: 'palco', id: 'conteudo', tabindex: '-1' });
+      this.acertos = 0;
+      this.respondidas = 0;
+      // Roteiro da etapa (painel lateral no computador)
+      const prog = EA.progresso.etapa(e.id);
+      this.max = prog.feito ? e.telas.length - 1 : prog.max || prog.tela || 0;
+      this.roteiro = el('ol', { class: 'roteiro-lista' });
+      e.telas.forEach((t, i) => {
+        const nome = t.titulo || (t.tipo === 'fim' ? 'Conclusão' : 'Tela ' + (i + 1));
+        const b = el('button', { type: 'button', class: 'roteiro-item', onclick: () => i <= this.max && i !== this.i && this.ir(i) }, [
+          el('span', { class: 'roteiro-n', 'aria-hidden': 'true', texto: i + 1 }),
+          el('span', { class: 'roteiro-nome', html: fmt(nome) }),
+        ]);
+        this.roteiro.append(el('li', {}, b));
+      });
       this.raiz.innerHTML = '';
       this.raiz.append(
         el('div', { class: 'cabeca' }, [
@@ -33,8 +47,15 @@
           ]),
           el('div', { class: 'barra-progresso', role: 'progressbar', 'aria-label': 'Progresso da etapa', 'aria-valuemin': 0, 'aria-valuemax': 100 }, this.barra),
         ]),
-        this.palco,
-        el('footer', { class: 'acoes' }, [this.btnVoltar, this.btnProx])
+        el('div', { class: 'etapa-corpo' }, [
+          el('aside', { class: 'roteiro', 'aria-label': 'Roteiro da etapa' }, [
+            el('p', { class: 'roteiro-titulo' }, [el('span', { class: 'chip', texto: e.id }), ' ', e.titulo]),
+            el('p', { class: 'nota', texto: `Descritor ${e.descritor} · ${e.minutos} min` }),
+            this.roteiro,
+          ]),
+          this.palco,
+        ]),
+        el('footer', { class: 'acoes' }, el('div', { class: 'acoes-dentro' }, [this.btnVoltar, this.btnProx]))
       );
       EA.licaoAtual = this;
     }
@@ -42,7 +63,16 @@
     ir(i) {
       const telas = this.etapa.telas;
       this.i = Math.max(0, Math.min(i, telas.length - 1));
-      if (telas[this.i].tipo !== 'fim') EA.progresso.atualizar(this.etapa.id, { tela: this.i });
+      this.max = Math.max(this.max, this.i);
+      if (telas[this.i].tipo !== 'fim') EA.progresso.atualizar(this.etapa.id, { tela: this.i, max: this.max });
+      [...this.roteiro.children].forEach((li, j) => {
+        const b = li.firstChild;
+        b.classList.toggle('atual', j === this.i);
+        b.classList.toggle('visto', j < this.i || (j <= this.max && j !== this.i));
+        b.disabled = j > this.max;
+        if (j === this.i) b.setAttribute('aria-current', 'step');
+        else b.removeAttribute('aria-current');
+      });
       const tela = telas[this.i];
       this.palco.innerHTML = '';
       const bloco = el('section', { class: 'tela entra tela-' + tela.tipo });
@@ -70,6 +100,12 @@
     liberar() {
       this.ctrl.chamar = true;
       this.atualizar();
+    }
+
+    // Placar da sessão: perguntas acertadas de primeira
+    registrar(r) {
+      this.respondidas++;
+      if (r && r.ok) this.acertos++;
     }
 
     proximo() {
@@ -175,8 +211,9 @@
     if (tela.html) bloco.append(el('div', { class: 'texto', html: fmt(tela.html) }));
     EA.item(bloco, tela.item, {
       modo: 'pratica',
-      aoTerminar() {
+      aoTerminar(r) {
         feito = true;
+        L.registrar(r);
         L.liberar();
       },
     });
@@ -193,8 +230,9 @@
       mostrou = true;
       EA.item(area, tela.item, {
         modo: 'pratica',
-        aoTerminar() {
+        aoTerminar(r) {
           feito = true;
+          L.registrar(r);
           L.liberar();
         },
       });
@@ -365,6 +403,7 @@
         letras: true,
         aoTerminar(r) {
           hist.push(r);
+          L.registrar(r);
           desenharPlacar();
           if (criterios().every((c) => c.ok)) {
             feito = true;
@@ -397,6 +436,12 @@
       ]),
       el('p', { class: 'nota', texto: 'Mostre este código ao professor. Ele vale para o dia de hoje.' })
     );
+    if (L.respondidas) {
+      bloco.append(el('div', { class: 'resumo-fim entra' }, [
+        el('span', { class: 'resumo-n', texto: `${L.acertos}/${L.respondidas}` }),
+        el('span', { texto: 'perguntas certas de primeira nesta sessão. Os erros também contam: cada um mostrou um caminho.' }),
+      ]));
+    }
     return {
       rotulo: () => (seguinte ? `Ir para a etapa ${seguinte} →` : 'Voltar ao início'),
       avancar() {

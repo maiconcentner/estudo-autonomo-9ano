@@ -13,11 +13,15 @@
     etapas: [],
   });
 
-  const ROTULO_TEMA = { auto: '◐ Tema: auto', claro: '☀ Tema: claro', escuro: '☾ Tema: escuro' };
+  const ROTULO_TEMA = { auto: '🌓 Automático', claro: '☀️ Claro', escuro: '🌙 Escuro' };
 
   function botaoTema() {
-    const b = el('button', { class: 'btn leve pequeno', type: 'button' });
-    const pintar = () => (b.textContent = ROTULO_TEMA[EA.aplicarTema()]);
+    const b = el('button', { class: 'btn leve pequeno btn-tema', type: 'button' });
+    const pintar = () => {
+      const t = EA.aplicarTema();
+      b.textContent = ROTULO_TEMA[t];
+      b.setAttribute('aria-label', 'Tema: ' + ROTULO_TEMA[t].replace(/^\S+\s/, '') + '. Toque para trocar.');
+    };
     b.addEventListener('click', () => {
       const ordem = ['auto', 'claro', 'escuro'];
       const atual = EA.progresso.pref('tema') || 'auto';
@@ -28,66 +32,130 @@
     return b;
   }
 
-  function estado(id) {
-    const p = EA.progresso.etapa(id);
-    if (p.feito) return { cls: 'feita', txt: '✓ Concluída', acao: 'Refazer' };
-    if (p.tela) return { cls: 'andamento', txt: '◔ Em andamento', acao: 'Continuar' };
-    return { cls: '', txt: '', acao: 'Começar' };
+  // Logotipo: o quadrado (a + b)² em quatro peças
+  function logo() {
+    const span = el('span', { class: 'logo', 'aria-hidden': 'true' });
+    span.innerHTML = '<svg viewBox="0 0 32 32"><rect x="2" y="2" width="19" height="19" rx="2" class="lg-a"/><rect x="23" y="2" width="7" height="19" rx="2" class="lg-ab"/><rect x="2" y="23" width="19" height="7" rx="2" class="lg-ab"/><rect x="23" y="23" width="7" height="7" rx="2" class="lg-b"/></svg>';
+    return span;
+  }
+
+  // Anel de progresso (feitas de total)
+  function anel(feitas, total) {
+    const r = 20, c = 2 * Math.PI * r, f = total ? feitas / total : 0;
+    const span = el('span', { class: 'anel', role: 'img', 'aria-label': `${feitas} de ${total} etapas concluídas` });
+    span.innerHTML = `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" class="anel-fundo"/><circle cx="24" cy="24" r="${r}" class="anel-cheio" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 24 24)"/></svg><b>${feitas}/${total}</b>`;
+    return span;
+  }
+
+  function estado(e) {
+    const p = EA.progresso.etapa(e.id);
+    if (p.feito) return { cls: 'feita', txt: 'Concluída', acao: 'Refazer', pct: 100 };
+    if (p.tela) return { cls: 'andamento', txt: 'Em andamento', acao: 'Continuar', pct: Math.round((p.tela / e.telas.length) * 100) };
+    return { cls: 'nova', txt: '', acao: 'Começar', pct: 0 };
   }
 
   function inicio() {
     document.title = 'Estudo Autônomo 9º ano';
     app.innerHTML = '';
-    const sugerida = EA.trilhas.flatMap((t) => t.etapas).find((e) => !EA.progresso.etapa(e.id).feito);
+    const todas = EA.trilhas.flatMap((t) => t.etapas);
+    const sugerida = todas.find((e) => !EA.progresso.etapa(e.id).feito);
 
     const cab = el('header', { class: 'topo-inicio' }, [
-      el('div', {}, [
-        el('p', { class: 'sobretitulo', texto: 'Matemática · 9º ano' }),
-        el('h1', { texto: 'Estudo autônomo' }),
+      el('a', { class: 'marca-site', href: '#/' }, [
+        logo(),
+        el('span', {}, [el('strong', { texto: 'Estudo autônomo' }), el('small', { texto: 'Matemática · 9º ano' })]),
       ]),
       botaoTema(),
     ]);
 
-    const intro = el('section', { class: 'cartao intro' }, [
-      el('p', { html: 'Estude no seu ritmo, pelo celular ou pelo computador. Cada etapa leva <strong>de 5 a 8 minutos</strong>.' }),
-      el('ul', { class: 'lista-curta' }, [
-        el('li', { texto: 'Uma ideia por tela.' }),
-        el('li', { texto: 'Errou? A resposta explica o seu erro e você tenta de novo.' }),
-        el('li', { texto: 'No fim de cada etapa você ganha um código para mostrar ao professor.' }),
+    // Cartão principal: continuar ou começar
+    let destaque;
+    if (sugerida) {
+      const st = estado(sugerida);
+      destaque = el('a', { class: 'continuar', href: '#/etapa/' + sugerida.id }, [
+        el('span', { class: 'continuar-rotulo', texto: st.pct ? 'Continue de onde parou' : todas.indexOf(sugerida) === 0 ? 'Comece por aqui' : 'Próxima etapa' }),
+        el('span', { class: 'continuar-linha' }, [
+          el('span', { class: 'etapa-id', texto: sugerida.id }),
+          el('span', {}, [el('strong', { texto: sugerida.titulo }), el('span', { class: 'nota', html: fmt(sugerida.resumo) })]),
+        ]),
+        el('span', { class: 'barrinha', role: 'img', 'aria-label': `${st.pct}% da etapa` }, el('i', { style: `width:${st.pct}%` })),
+        el('span', { class: 'btn primario largo', texto: (st.pct ? 'Continuar' : 'Começar') + ' →' }),
+      ]);
+    } else {
+      destaque = el('div', { class: 'continuar feito' }, [
+        el('span', { class: 'continuar-rotulo', texto: 'Tudo concluído' }),
+        el('strong', { texto: '🎉 Você terminou todas as etapas publicadas.' }),
+        el('span', { class: 'nota', texto: 'Pode refazer qualquer uma para treinar.' }),
+      ]);
+    }
+
+    const hero = el('section', { class: 'hero' }, [
+      el('div', { class: 'hero-texto' }, [
+        el('h1', { html: 'Aprenda <span class="marca-texto">um passo</span> de cada vez.' }),
+        el('p', { texto: 'Figuras que se movem, uma ideia por tela e uma explicação para cada erro. Estude pelo celular ou pelo computador.' }),
+        el('ul', { class: 'selos' }, [
+          el('li', { texto: '⏱ de 5 a 15 min por etapa' }),
+          el('li', { texto: '💡 dicas não tiram pontos' }),
+          el('li', { texto: '🔒 nada sai do aparelho' }),
+        ]),
       ]),
+      destaque,
     ]);
 
     const lista = el('div', { class: 'trilhas' });
     EA.trilhas.forEach((t, n) => {
-      const card = el('section', { class: 'trilha' + (t.emBreve ? ' em-breve' : '') }, [
+      const feitas = t.etapas.filter((e) => EA.progresso.etapa(e.id).feito).length;
+      const card = el('section', { class: 'trilha' + (t.emBreve ? ' em-breve' : ''), 'aria-labelledby': 'trilha-' + t.id }, [
         el('div', { class: 'trilha-cab' }, [
-          el('span', { class: 'trilha-num', texto: 'Trilha ' + (n + 1) }),
-          t.emBreve ? el('span', { class: 'chip suave', texto: 'Em breve' }) : null,
+          el('div', {}, [
+            el('span', { class: 'trilha-num', texto: 'Trilha ' + (n + 1) }),
+            el('h2', { id: 'trilha-' + t.id, texto: t.titulo }),
+          ]),
+          t.emBreve ? el('span', { class: 'chip suave', texto: '🔒 Em breve' }) : anel(feitas, t.etapas.length),
         ]),
-        el('h2', { texto: t.titulo }),
         el('p', { class: 'nota', texto: t.descricao }),
       ]);
+      const mapa = el('ol', { class: 'mapa' });
       t.etapas.forEach((e) => {
-        const st = estado(e.id);
+        const st = estado(e);
         const p = EA.progresso.etapa(e.id);
-        card.append(
-          el('a', { class: 'etapa-link ' + st.cls + (sugerida === e ? ' sugerida' : ''), href: '#/etapa/' + e.id }, [
-            el('span', { class: 'etapa-id', texto: e.id }),
-            el('span', { class: 'etapa-info' }, [
-              el('strong', { texto: e.titulo }),
-              el('span', { class: 'nota', html: fmt(e.resumo) }),
-              el('span', { class: 'etapa-meta' }, [
-                el('span', { texto: '⏱ ' + e.minutos + ' min' }),
-                st.txt ? el('span', { class: 'status', texto: st.txt }) : null,
-                p.feito && p.codigo ? el('span', { class: 'status', texto: 'Código: ' + p.codigo }) : null,
+        mapa.append(
+          el('li', { class: 'mapa-item ' + st.cls + (sugerida === e ? ' sugerida' : '') }, [
+            el('span', { class: 'mapa-no', 'aria-hidden': 'true', texto: p.feito ? '✓' : e.id }),
+            el('a', { class: 'etapa-link', href: '#/etapa/' + e.id }, [
+              el('span', { class: 'etapa-info' }, [
+                el('span', { class: 'etapa-topo' }, [
+                  el('span', { class: 'etapa-sigla', texto: e.id }),
+                  st.txt ? el('span', { class: 'status status-' + st.cls, texto: (p.feito ? '✓ ' : '▸ ') + st.txt }) : null,
+                  sugerida === e ? el('span', { class: 'chip', texto: 'Agora' }) : null,
+                ]),
+                el('strong', { texto: e.titulo }),
+                el('span', { class: 'nota', html: fmt(e.resumo) }),
+                el('span', { class: 'etapa-meta' }, [
+                  el('span', { texto: '⏱ ' + e.minutos + ' min' }),
+                  el('span', { texto: e.telas.length + ' telas' }),
+                  p.feito && p.codigo ? el('span', { class: 'cod', texto: 'Código ' + p.codigo }) : null,
+                ]),
+                st.cls === 'andamento' ? el('span', { class: 'barrinha', role: 'img', 'aria-label': `${st.pct}% da etapa` }, el('i', { style: `width:${st.pct}%` })) : null,
               ]),
+              el('span', { class: 'etapa-acao', texto: st.acao + ' →' }),
             ]),
-            el('span', { class: 'etapa-acao' }, [sugerida === e ? el('span', { class: 'chip', texto: 'Comece aqui' }) : null, el('span', { texto: st.acao + ' →' })]),
           ])
         );
       });
+      if (t.etapas.length) card.append(mapa);
       lista.append(card);
     });
+
+    const como = el('section', { class: 'como' }, [
+      el('h2', { texto: 'Como funciona' }),
+      el('ol', { class: 'como-lista' }, [
+        el('li', {}, [el('span', { class: 'como-ic', texto: '👀' }), el('strong', { texto: 'Veja' }), el('span', { texto: 'As figuras se movem um passo por toque. Dá para rever.' })]),
+        el('li', {}, [el('span', { class: 'como-ic', texto: '✍️' }), el('strong', { texto: 'Tente' }), el('span', { texto: 'Errou? A resposta explica o seu erro e você tenta de novo.' })]),
+        el('li', {}, [el('span', { class: 'como-ic', texto: '🔢' }), el('strong', { texto: 'Confira' }), el('span', { texto: 'Troque a letra por um número e veja se os dois lados batem.' })]),
+        el('li', {}, [el('span', { class: 'como-ic', texto: '🎟️' }), el('strong', { texto: 'Mostre' }), el('span', { texto: 'No fim de cada etapa você ganha um código para o professor.' })]),
+      ]),
+    ]);
 
     const rodape = el('footer', { class: 'rodape' }, [
       el('p', { class: 'nota', texto: 'Seu progresso fica salvo só neste aparelho. Nada é enviado para a internet.' }),
@@ -105,7 +173,7 @@
       ]),
     ]);
 
-    app.append(el('div', { class: 'pagina' }, [cab, intro, lista, rodape]));
+    app.append(el('div', { class: 'pagina pagina-inicio' }, [cab, hero, lista, como, rodape]));
   }
 
   function professor() {
@@ -133,9 +201,10 @@
 
     app.append(el('div', { class: 'pagina' }, [
       el('header', { class: 'topo-inicio' }, [
-        el('div', {}, [el('p', { class: 'sobretitulo', texto: 'Estudo autônomo' }), el('h1', { texto: 'Área do professor' })]),
+        el('a', { class: 'marca-site', href: '#/' }, [logo(), el('span', {}, [el('strong', { texto: 'Estudo autônomo' }), el('small', { texto: 'Área do professor' })])]),
         el('a', { class: 'btn leve pequeno', href: '#/', texto: '⌂ Início' }),
       ]),
+      el('h1', { class: 'titulo-pagina', texto: 'Área do professor' }),
       el('section', { class: 'cartao' }, [
         el('h2', { texto: 'Conferir código de conclusão' }),
         el('p', { class: 'nota', texto: 'O aluno recebe um código ao terminar cada etapa. Os dois últimos caracteres conferem a etapa e o dia. É uma checagem simples, sem login e sem coleta de dados.' }),

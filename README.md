@@ -18,7 +18,8 @@ A conferência de cada ponto do diagnóstico está em [`docs/analise-didatica.md
 ## Como funciona para o aluno
 
 - Uma ideia por tela, texto curto e botões grandes na parte de baixo da tela. Perguntas com várias partes aparecem uma por vez.
-- No notebook, a figura fica ao lado do texto, e as setas do teclado avançam e voltam.
+- No celular, os botões ficam embaixo, ao alcance do polegar. No computador, o conteúdo vira uma folha, um roteiro lateral mostra as telas da etapa (dá para voltar a qualquer tela já vista), a figura fica ao lado do texto e as setas do teclado avançam e voltam.
+- A página inicial mostra a trilha como um mapa, com o progresso de cada etapa e um cartão para continuar de onde parou.
 - As figuras se movem um passo por toque em **Próximo passo**, com **Rever movimento**. Nada exige arrastar.
 - Cada alternativa errada tem um retorno próprio, às vezes com figura (por exemplo, o L comparado com o quadrado de lado 12 − x).
 - Dicas em três degraus: pista, pista maior e solução comentada. Dicas não tiram pontos.
