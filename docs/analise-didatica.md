@@ -76,4 +76,35 @@ Revisão feita em 09/10/2026 a partir do *Diagnóstico de dificuldades para o ma
 
 - **Duração.** Com mais passos, a 1A leva de 8 a 12 minutos e a 1B de 10 a 15, acima dos 5 a 8 minutos sugeridos no diagnóstico. Quem acerta o teste de entrada pula a 1A. Se ficar longo, dá para dividir a 1B em duas etapas (ver e praticar).
 - **Hipótese de E1.** O diagnóstico recomenda conversar com 3 ou 4 alunos que marcaram (12 − x)². A trilha ataca as duas hipóteses, mas a conversa mostraria qual delas pesa mais.
-- **Trilha 2** (D27) ainda não foi feita.
+- **Trilha 2:** ainda não há segunda medição de D27. Vale incluir um item de D27 num próximo simulado para ver se o erro da altura caiu.
+
+## 4. Trilha 2 (D27) contra o diagnóstico
+
+Fontes: diagnóstico, seção 5; capítulo 6 do livro (*Explorando formas e proporções de triângulos*, notação e contextos como a mão francesa e o açaizeiro com cabos); projeto *Relações Métricas Dinâmicas* (cenas do telhado, da torre e da praça, e a mesma notação).
+
+| Diagnóstico (5.4) | Atendido em |
+|---|---|
+| 1. Identificar por toque, em figuras variadas, inclusive girada | 2A: nomes com figura, animação "a sombra do cateto" (projeção como sombra) e desafios de toque com figuras giradas e espelhadas, telhado e torre; meta de 3 acertos de primeira seguidos (5.7) |
+| 2. Três triângulos semelhantes em cores, com giro por toque até se encaixarem | 2B: animação de 9 passos (separa, gira, vira, um movimento por toque) e pergunta de verificação |
+| As relações aparecem como proporções | 2B: cartões com os lados correspondentes destacados (linha cheia e tracejada) para $c² = a · m$, $b² = a · n$, $h² = m · n$, e a área de dois jeitos para $a · h = b · c$ |
+| 3. Escolher a relação antes de calcular | 2B: quadro "qual relação usar" e item com 5 situações, incluindo o telhado |
+| 4. Calcular em escada e conferir por Pitágoras | 2C: exemplo resolvido, você completa e sozinho; conferência por Pitágoras no triângulo menor |
+| 5. Problemas em contexto com o erro E1 como armadilha | 2C: a ponte (50 = 18 + 32) com os distratores obrigatórios 24, 14, 18 e 50 |
+
+| Itens de prática (5.5) | Onde |
+|---|---|
+| 1. Altura com m = 4 e n = 9 | Exemplo resolvido da altura (e item guiado com 2 e 8) |
+| 2. Cateto com hipotenusa 25 e projeção 9 | Item "Você completa: o cateto", com conferência |
+| 3. Ponte de 50 m, 18 e 32, distratores 24, 14, 18, 50 | Item "Sozinho: a ponte" |
+| 4. Bruno achou 24 | Item "Investigue o erro", com correção por Pitágoras |
+| 5. Direção inversa: altura 12 e projeção 9 | Item "O caminho ao contrário" (açaizeiro com cabos) |
+| 6. Triângulo 3, 4, 5 com base 1,8 + 3,2 e altura 2,4 | Item "Com vírgula: a mão francesa" |
+
+| Erros (5.2 e 5.6) | Retorno |
+|---|---|
+| E1, calcula a altura no lugar do cateto (40%) | Figura com a altura destacada e "esse segmento é o lado inclinado?", rota por Pitágoras; aparece nos toques (telhado e torre), na escolha da relação e em todos os itens de cateto |
+| E2, diferença das projeções (15%) | "A diferença entre os trechos não é lado de nada", com os dois trechos marcados |
+| E3 e E4, usa a projeção ou a base como resposta (13%) | Pede para marcar no desenho o segmento pedido, com a projeção destacada como "sombra" |
+| Esquecer a raiz (não está no diagnóstico, mas é comum) | Retorno "esse é o quadrado; falta a raiz" em todos os cálculos |
+
+Critério de domínio (5.7): 3 toques corretos seguidos na 2A, e 4 acertos nas últimas 5 do treino da 2C, com pelo menos 2 pedindo um cateto.

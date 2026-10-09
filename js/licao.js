@@ -375,6 +375,7 @@
     }
     function criterios() {
       const j = janela();
+      if (tela.criterios) return tela.criterios(j);
       return [
         { ok: j.filter((r) => r.ok).length >= 4 && j.length === 5, txt: '4 acertos nas últimas 5 questões' },
         { ok: j.some((r) => r.ok && r.tags.includes('contraste')), txt: 'acertar 1 questão de comparar' },
@@ -418,6 +419,71 @@
     }
     desenharPlacar();
     proximoItem();
+    return { pronto: () => feito };
+  };
+
+  // Identificar por toque: o aluno toca no segmento pedido. Termina com N acertos de primeira seguidos.
+  EA.telas.toque = function (bloco, tela, L) {
+    const meta = tela.meta || 3;
+    let seguidos = 0, feito = false, n = 0;
+    if (tela.html) bloco.append(el('div', { class: 'texto', html: fmt(tela.html) }));
+    const placar = el('div', { class: 'toque-placar', 'aria-live': 'polite' });
+    const area = el('div');
+    bloco.append(placar, area);
+    function desenharPlacar() {
+      placar.innerHTML = '';
+      placar.append(el('span', { texto: `Meta: ${meta} acertos de primeira seguidos` }));
+      for (let i = 0; i < meta; i++) placar.append(el('span', { class: 'casa ' + (i < seguidos ? 'ok' : ''), texto: i < seguidos ? '✓' : '' }));
+    }
+    function proxima() {
+      area.innerHTML = '';
+      const t = tela.gerar(n++);
+      const f = EA.fig.triRet.criar(Object.assign({}, t.fig, { alvos: t.alvos }));
+      const retorno = el('div', { class: 'retorno', 'aria-live': 'polite' });
+      area.append(...[
+        el('p', { class: 'contador', texto: `Desafio ${n}` }),
+        t.contexto ? el('p', { class: 'contexto', html: fmt(t.contexto) }) : null,
+        el('p', { class: 'pergunta', html: fmt(t.pergunta) }),
+        el('div', { class: 'figura' }, f.svg),
+        el('p', { class: 'nota', texto: 'Toque direto no segmento da figura. No computador, também dá para usar Tab e Enter.' }),
+        retorno,
+      ].filter(Boolean));
+      let primeira = true, ok = false;
+      const mostrar = (certo, html) => {
+        retorno.className = 'retorno entra ' + (certo ? 'certo' : 'errado');
+        retorno.innerHTML = '';
+        retorno.append(
+          el('p', { class: 'retorno-cab' }, [el('span', { class: 'retorno-icone', 'aria-hidden': 'true', texto: certo ? '✓' : '✗' }), el('strong', { texto: certo ? 'Certo!' : 'Ainda não.' })]),
+          el('div', { class: 'retorno-txt', html: fmt(html) })
+        );
+        requestAnimationFrame(() => retorno.scrollIntoView({ behavior: EA.reduzMovimento() ? 'auto' : 'smooth', block: 'nearest' }));
+      };
+      f.aoTocar((q) => {
+        if (ok) return;
+        if (q === t.alvo) {
+          ok = true;
+          f.marcar(q, 'certo');
+          seguidos = primeira ? seguidos + 1 : 0;
+          L.registrar({ ok: primeira });
+          desenharPlacar();
+          mostrar(true, t.fbCerto || `Esse é ${EA.nomeSeg[q]}.`);
+          if (seguidos >= meta) {
+            feito = true;
+            area.append(el('div', { class: 'cartao destaque entra' }, [el('p', { class: 'grande', texto: '🎉 Você reconhece os elementos! Toque em Próximo.' })]));
+            L.liberar();
+          } else {
+            area.append(el('button', { class: 'btn primario largo entra', type: 'button', texto: 'Próximo desafio →', onclick: proxima }));
+          }
+        } else {
+          primeira = false;
+          f.marcar(q, 'errado');
+          mostrar(false, (t.fb && t.fb[q]) || `Esse é ${EA.nomeSeg[q]}. Procure de novo.`);
+        }
+      });
+      window.scrollTo({ top: bloco.offsetTop, behavior: EA.reduzMovimento() ? 'auto' : 'smooth' });
+    }
+    desenharPlacar();
+    proxima();
     return { pronto: () => feito };
   };
 

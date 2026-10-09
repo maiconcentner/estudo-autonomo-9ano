@@ -345,9 +345,273 @@
     },
   };
 
+  // ---------------- Trilha 2: triângulo retângulo ----------------
+  // Notação do livro e do projeto Relações Métricas Dinâmicas:
+  // A = ângulo reto, a = BC (hipotenusa), b = AC, c = AB, h = AH, m = BH (projeção de c), n = HC (projeção de b).
+  const SEG = { a: ['B', 'C'], b: ['A', 'C'], c: ['A', 'B'], h: ['A', 'H'], m: ['B', 'H'], n: ['H', 'C'] };
+  const NOME_SEG = { a: 'hipotenusa BC', b: 'cateto AC', c: 'cateto AB', h: 'altura AH', m: 'projeção BH', n: 'projeção HC' };
+  const v2 = {
+    sub: (p, q) => [p[0] - q[0], p[1] - q[1]],
+    add: (p, q) => [p[0] + q[0], p[1] + q[1]],
+    mul: (p, k) => [p[0] * k, p[1] * k],
+    uni: (p) => { const l = Math.hypot(p[0], p[1]) || 1; return [p[0] / l, p[1] / l]; },
+    dot: (p, q) => p[0] * q[0] + p[1] * q[1],
+  };
+  const L = (p, q, cls) => s('line', { x1: p[0] * U, y1: p[1] * U, x2: q[0] * U, y2: q[1] * U, class: cls });
+  const PG = (pts, cls) => s('polygon', { points: pts.map((q) => q[0] * U + ',' + q[1] * U).join(' '), class: cls });
+  function marcaReta(V, d1, d2, t = 0.55) {
+    const p1 = v2.add(V, v2.mul(d1, t)), p2 = v2.add(p1, v2.mul(d2, t)), p3 = v2.add(V, v2.mul(d2, t));
+    return s('path', { d: `M${p1[0] * U} ${p1[1] * U}L${p2[0] * U} ${p2[1] * U}L${p3[0] * U} ${p3[1] * U}`, class: 'reto' });
+  }
+
+  // Triângulo retângulo com altura. Serve para identificar por toque, para dados de exercício e para animar "sombras".
+  // p: m, n (projeções), giro (graus), espelhar, rotulos {chave: texto}, destaque [chaves], alvos [chaves], dois (pinta os
+  // triângulos menores), proj (mostra m e n), vertices (letras), cena ('telhado' | 'torre'), estados (para animação).
+  EA.fig.triRet = {
+    criar(p = {}) {
+      const m = p.m != null ? p.m : 3.6, n = p.n != null ? p.n : 6.4, h = Math.sqrt(m * n);
+      const k = 10 / (m + n);
+      let P = { B: [0, 0], C: [(m + n) * k, 0], H: [m * k, 0], A: [m * k, -h * k] };
+      if (p.espelhar) Object.keys(P).forEach((q) => (P[q] = [10 - P[q][0], P[q][1]]));
+      const G = v2.mul(v2.add(v2.add(P.A, P.B), P.C), 1 / 3);
+      if (p.giro) {
+        const t = (p.giro * Math.PI) / 180, c = Math.cos(t), sn = Math.sin(t);
+        Object.keys(P).forEach((q) => {
+          const d = v2.sub(P[q], G);
+          P[q] = [G[0] + d[0] * c - d[1] * sn, G[1] + d[0] * sn + d[1] * c];
+        });
+      }
+      const xs = Object.values(P).map((q) => q[0]), ys = Object.values(P).map((q) => q[1]);
+      const pad = 2.3, extra = p.cena ? 2.2 : 0;
+      const x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad, x1 = Math.max(...xs) + pad, y1 = Math.max(...ys) + pad + extra;
+      const svg = novoSvg(x0, y0, x1 - x0, y1 - y0, p.alt || 'Triângulo retângulo ABC com ângulo reto em A e altura AH.');
+      svg.classList.add('fig-tri');
+
+      // cena de fundo (sem girar)
+      if (p.cena === 'telhado') {
+        const w = 10, alt = 3.2;
+        svg.append(R(P.B[0] + 0.5, P.B[1], w - 1, alt, 'cena-parede'), R(P.B[0] - 1, P.B[1] + alt, w + 2, 0.5, 'cena-chao'));
+      } else if (p.cena === 'torre') {
+        svg.append(R(Math.min(P.B[0], P.C[0]) - 1, P.B[1], 12, 0.5, 'cena-chao'), L(P.H, P.A, 'cena-torre'));
+      }
+
+      const inteiro = PG([P.A, P.B, P.C], 'tri-fundo');
+      const azul = PG([P.A, P.B, P.H], 'tri-azul');
+      const laranja = PG([P.A, P.H, P.C], 'tri-laranja');
+      svg.append(inteiro, azul, laranja);
+
+      const linhas = {};
+      ['a', 'b', 'c', 'h', 'm', 'n'].forEach((q) => {
+        linhas[q] = L(P[SEG[q][0]], P[SEG[q][1]], 'seg seg-' + q + (q === 'm' || q === 'n' ? ' seg-proj' : ''));
+        svg.append(linhas[q]);
+      });
+      const uAB = v2.uni(v2.sub(P.B, P.A)), uAC = v2.uni(v2.sub(P.C, P.A)), uHA = v2.uni(v2.sub(P.A, P.H)), uHC = v2.uni(v2.sub(P.C, P.H));
+      const retoA = marcaReta(P.A, uAB, uAC), retoH = marcaReta(P.H, uHA, uHC, 0.45);
+      svg.append(retoA, retoH);
+
+      // projeção como "sombra": luz caindo perpendicular à hipotenusa
+      const luz = s('g', { class: 'luz' }, [L(P.A, P.H, 'raio')]);
+      svg.append(luz);
+
+      // rótulos dos segmentos
+      const rot = {};
+      const fora = (q, dist) => {
+        const [i, j] = SEG[q];
+        const M = v2.mul(v2.add(P[i], P[j]), 0.5);
+        const d = v2.uni(v2.sub(P[j], P[i]));
+        let nn = [-d[1], d[0]];
+        if (q === 'h') { if (v2.dot(nn, v2.sub(P.C, P.H)) < 0) nn = v2.mul(nn, -1); }
+        else if (v2.dot(nn, v2.sub(M, G)) < 0) nn = v2.mul(nn, -1);
+        return v2.add(M, v2.mul(nn, dist));
+      };
+      Object.entries(p.rotulos || {}).forEach(([q, t]) => {
+        const pos = fora(q, q === 'a' ? (p.rotulos.m || p.rotulos.n ? 1.9 : 0.85) : 0.85);
+        rot[q] = T(pos[0], pos[1], t, 'rot rot-seg rot-' + q);
+        svg.append(rot[q]);
+      });
+      if (p.vertices !== false) {
+        ['A', 'B', 'C', 'H'].forEach((q) => {
+          let d = v2.uni(v2.sub(P[q], G));
+          if (q === 'H') d = v2.uni(v2.sub(P.H, P.A));
+          const pos = v2.add(P[q], v2.mul(d, 0.85));
+          svg.append(T(pos[0], pos[1], q, 'rot vert'));
+        });
+      }
+
+      // alvos de toque (área grande, invisível)
+      const alvos = {};
+      let aoTocar = null;
+      (p.alvos || []).forEach((q) => {
+        const hit = L(P[SEG[q][0]], P[SEG[q][1]], 'alvo');
+        hit.setAttribute('tabindex', '0');
+        hit.setAttribute('role', 'button');
+        hit.setAttribute('aria-label', 'Segmento ' + SEG[q][0] + SEG[q][1]);
+        const tocar = () => aoTocar && aoTocar(q);
+        hit.addEventListener('click', tocar);
+        hit.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tocar(); } });
+        alvos[q] = hit;
+        svg.append(hit);
+      });
+
+      function estado(e) {
+        const mostrarProj = e.proj != null ? e.proj : p.proj != null ? p.proj : !!(p.rotulos && (p.rotulos.m || p.rotulos.n));
+        ['m', 'n'].forEach((q) => mostra(linhas[q], mostrarProj || (e.destaque || []).includes(q)));
+        mostra(linhas.h, e.h !== false);
+        mostra(retoH, e.h !== false);
+        mostra(luz, !!e.luz);
+        [azul, laranja].forEach((x) => mostra(x, !!e.dois));
+        Object.keys(linhas).forEach((q) => linhas[q].classList.toggle('destaque', (e.destaque || []).includes(q)));
+        Object.keys(rot).forEach((q) => mostra(rot[q], !e.rotulos || e.rotulos.includes(q)));
+      }
+      const estados = p.estados || [{ destaque: p.destaque, dois: p.dois, h: p.h, luz: p.luz }];
+      const ir = (kk, sem) => aplicar(svg, sem, () => estado(estados[Math.min(kk, estados.length - 1)]));
+      ir(p.estatica && p.estados ? estados.length - 1 : 0, true);
+      return {
+        svg, ir,
+        aoTocar(fn) { aoTocar = fn; },
+        marcar(q, tipo) {
+          linhas[q].classList.add('marcado-' + tipo);
+          if (alvos[q]) alvos[q].setAttribute('aria-label', 'Segmento ' + SEG[q][0] + SEG[q][1] + (tipo === 'certo' ? ', certo' : ', errado'));
+        },
+        limpar() { Object.values(linhas).forEach((l) => l.classList.remove('marcado-certo', 'marcado-errado')); },
+        nome: (q) => NOME_SEG[q],
+      };
+    },
+  };
+  EA.nomeSeg = NOME_SEG;
+
+  // Os três triângulos semelhantes: a altura corta o grande em dois, e cada pedaço gira e vira até ficar na mesma posição.
+  // 0 grande | 1 altura e dois menores | 2 ângulos | 3 separa | 4 gira azul | 5 vira azul | 6 gira laranja | 7 vira laranja | 8 medidas
+  // p.destaque: pares para destacar na posição final, ex.: ['G:a','G:c','Z:c','Z:m'] (G grande, Z azul, O laranja)
+  EA.fig.tresTri = {
+    criar(p = {}) {
+      const a = 10, c = 6, b = 8, m = 3.6, n = 6.4, h = 4.8;
+      const B = [0, 0], C = [a, 0], H = [m, 0], A = [m, -h];
+      const svg = novoSvg(-3.6, -6.4, 17.4, 17.2, 'O triângulo grande ABC e os dois triângulos menores ABH e AHC, separados e colocados na mesma posição. Os três têm os mesmos ângulos.');
+      svg.classList.add('fig-tri');
+      const grande = PG([A, B, C], 'tri-fundo');
+      const altG = L(A, H, 'seg seg-h tracejada');
+      const ladosG = s('g', {}, [L(B, C, 'seg'), L(A, B, 'seg'), L(A, C, 'seg')]);
+      const reto = (V, d1, d2) => marcaReta(V, v2.uni(d1), v2.uni(d2));
+      const arco = (V, d1, ang, r, duplo) => {
+        const g = s('g', { class: 'arco' });
+        const a0 = Math.atan2(d1[1], d1[0]);
+        [r, duplo ? r + 0.28 : null].filter(Boolean).forEach((rr) => {
+          const p0 = [V[0] + rr * Math.cos(a0), V[1] + rr * Math.sin(a0)];
+          const a1 = a0 + ang;
+          const p1 = [V[0] + rr * Math.cos(a1), V[1] + rr * Math.sin(a1)];
+          g.append(s('path', { d: `M${p0[0] * U} ${p0[1] * U}A${rr * U} ${rr * U} 0 0 ${ang > 0 ? 1 : 0} ${p1[0] * U} ${p1[1] * U}` }));
+        });
+        return g;
+      };
+      const beta = Math.atan2(h, m), gamma = Math.atan2(h, n);
+      // triângulo grande com ângulos
+      const angG = s('g', {}, [reto(A, v2.sub(B, A), v2.sub(C, A)), arco(B, [1, 0], -beta, 0.9, false), arco(C, [-1, 0], gamma, 0.9, true)]);
+      const letrasG = s('g', {}, [T(A[0], A[1] - 0.7, 'A', 'rot vert'), T(B[0] - 0.6, B[1] + 0.4, 'B', 'rot vert'), T(C[0] + 0.6, C[1] + 0.4, 'C', 'rot vert'), T(H[0], H[1] + 0.7, 'H', 'rot vert')]);
+      const legendaAng = s('g', {}, [T(1.6, -0.6, 'β', 'rot ang'), T(a - 1.7, -0.6, 'γ', 'rot ang')]);
+      // azul ABH (pivô B) e laranja AHC (pivô A), com ângulos que acompanham o movimento
+      const azul = s('g', { class: 'tri-movel' }, [
+        PG([A, B, H], 'tri-azul forte'), reto(H, v2.sub(A, H), v2.sub(B, H)), arco(B, [1, 0], -beta, 0.8, false),
+        arco(A, v2.sub(H, A), Math.PI / 2 - beta, 0.8, true),
+      ]);
+      const laranja = s('g', { class: 'tri-movel' }, [
+        PG([A, H, C], 'tri-laranja forte'), reto(H, v2.sub(A, H), v2.sub(C, H)), arco(C, [-1, 0], gamma, 0.8, true),
+        arco(A, v2.sub(H, A), -(Math.PI / 2 - gamma), 0.8, false),
+      ]);
+      // movimento rígido: ponto' = O + F(R(ponto − pivô))
+      const thZ = (Math.atan2(h, m) * 180) / Math.PI;      // gira o azul até AB ficar deitado
+      const thO = -(Math.atan2(h, n) * 180) / Math.PI;     // gira o laranja até AC ficar deitado
+      const baseY = 7.2;
+      // Gira e vira em torno do centro de cada triângulo, para nunca sair da figura.
+      // O centro final vem do movimento com pivô no vértice (B para o azul, A para o laranja).
+      const centro = (pts) => [(pts[0][0] + pts[1][0] + pts[2][0]) / 3, (pts[0][1] + pts[1][1] + pts[2][1]) / 3];
+      const imagem = (q, O, P, th) => {
+        const t = (th * Math.PI) / 180, d = v2.sub(q, P);
+        const r = [d[0] * Math.cos(t) - d[1] * Math.sin(t), d[0] * Math.sin(t) + d[1] * Math.cos(t)];
+        return [O[0] + r[0], O[1] - r[1]];
+      };
+      const gZ = centro([A, B, H]), gO = centro([A, H, C]);
+      const mov = {
+        azul: { el: azul, piv: gZ, ini: { o: gZ, th: 0, sy: 1 }, sep: { o: imagem(gZ, [-3, baseY], B, thZ), th: 0, sy: 1 } },
+        laranja: { el: laranja, piv: gO, ini: { o: gO, th: 0, sy: 1 }, sep: { o: imagem(gO, [5.4, baseY], A, thO), th: 0, sy: 1 } },
+      };
+      const atual = { azul: Object.assign({}, mov.azul.ini), laranja: Object.assign({}, mov.laranja.ini) };
+      function pinta(q, st) {
+        const pv = mov[q].piv;
+        mov[q].el.setAttribute('transform', `translate(${st.o[0] * U} ${st.o[1] * U}) scale(1 ${st.sy}) rotate(${st.th}) translate(${-pv[0] * U} ${-pv[1] * U})`);
+      }
+      const alvo = (q, k) => {
+        if (k < 3) return mov[q].ini;
+        const th = q === 'azul' ? thZ : thO;
+        const giraEm = q === 'azul' ? 4 : 6;
+        return { o: mov[q].sep.o, th: k >= giraEm ? th : 0, sy: k >= giraEm + 1 ? -1 : 1 };
+      };
+      let anim = null;
+      function animar(sem, k) {
+        const de = { azul: Object.assign({}, atual.azul), laranja: Object.assign({}, atual.laranja) };
+        const para = { azul: alvo('azul', k), laranja: alvo('laranja', k) };
+        if (anim) cancelAnimationFrame(anim);
+        const t0 = performance.now(), dur = sem || EA.reduzMovimento() ? 0 : 950;
+        const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+        const quadro = (agora) => {
+          const t = dur ? Math.min(1, (agora - t0) / dur) : 1, e = ease(t);
+          ['azul', 'laranja'].forEach((q) => {
+            const A0 = de[q], A1 = para[q];
+            atual[q] = { o: [A0.o[0] + (A1.o[0] - A0.o[0]) * e, A0.o[1] + (A1.o[1] - A0.o[1]) * e], th: A0.th + (A1.th - A0.th) * e, sy: A0.sy + (A1.sy - A0.sy) * e };
+            pinta(q, atual[q]);
+          });
+          if (t < 1) anim = requestAnimationFrame(quadro);
+        };
+        anim = requestAnimationFrame(quadro);
+        if (!dur) quadro(t0 + 1);
+      }
+      // medidas na posição final (texto sempre de pé)
+      const pos = {
+        G: { base: [5, 0.75], esq: [1.24, -2.82], dir: [7.2, -2.96], t: { base: 'a', esq: 'c', dir: 'b' } },
+        Z: { base: [0, baseY + 0.75], esq: [-2.48, baseY - 1.86], dir: [1.5, baseY - 2.0], t: { base: 'c', esq: 'm', dir: 'h' } },
+        O: { base: [9.4, baseY + 0.75], esq: [6.28, baseY - 2.34], dir: [11.26, baseY - 2.48], t: { base: 'b', esq: 'h', dir: 'n' } },
+      };
+      const medidas = s('g', { class: 'medidas' });
+      // p.destaque: { par1: ['G:a', 'Z:c'], par2: ['G:c', 'Z:m'] }: lados correspondentes, linha cheia e tracejada
+      const d1 = new Set((p.destaque && p.destaque.par1) || []), d2 = new Set((p.destaque && p.destaque.par2) || []);
+      const marcados = new Set([...d1, ...d2]);
+      const Zf = { B: [-3, baseY], A: [3, baseY], H: [-0.84, baseY - 2.88] };
+      const Of = { A: [5.4, baseY], C: [13.4, baseY], H: [8.28, baseY - 3.84] };
+      const ladosFinais = {
+        'G:a': [B, C], 'G:c': [A, B], 'G:b': [A, C],
+        'Z:c': [Zf.B, Zf.A], 'Z:m': [Zf.B, Zf.H], 'Z:h': [Zf.H, Zf.A],
+        'O:b': [Of.A, Of.C], 'O:h': [Of.A, Of.H], 'O:n': [Of.H, Of.C],
+      };
+      Object.entries(ladosFinais).forEach(([chave, [p1, p2]]) => {
+        if (d1.has(chave)) medidas.append(L(p1, p2, 'lado-par1'));
+        if (d2.has(chave)) medidas.append(L(p1, p2, 'lado-par2'));
+      });
+      Object.entries(pos).forEach(([tri, d]) => ['base', 'esq', 'dir'].forEach((lado) => {
+        const letra = d.t[lado];
+        const t = T(d[lado][0], d[lado][1], letra, 'rot rot-seg' + (marcados.has(tri + ':' + letra) ? ' marca-lado' : ''));
+        medidas.append(t);
+      }));
+      svg.append(grande, ladosG, altG, angG, legendaAng, letrasG, azul, laranja, medidas);
+      const ir = (k, sem) => {
+        mostra(altG, k >= 1);
+        mostra(azul, k >= 1);
+        mostra(laranja, k >= 1);
+        azul.classList.toggle('so-contorno', false);
+        mostra(angG, k >= 2);
+        mostra(legendaAng, k >= 2);
+        mostra(letrasG, k <= 2);
+        mostra(medidas, k >= 8);
+        svg.classList.toggle('mostra-angulos', k >= 2);
+        animar(sem, k);
+      };
+      ir(p.estatica ? 8 : 0, true);
+      return { svg, ir };
+    },
+  };
+
   // Atalho: figura estática dentro de um bloco
   EA.figura = function (def) {
     const f = EA.fig[def.nome].criar(Object.assign({ estatica: true }, def.p || {}));
-    return EA.el('div', { class: 'figura' }, f.svg);
+    return EA.el('div', { class: 'figura' + (def.larga ? ' larga' : '') }, f.svg);
   };
 })();

@@ -4,15 +4,6 @@
   const { el, fmt } = EA;
   const app = document.getElementById('app');
 
-  // Trilhas ainda sem conteúdo aparecem como "em breve"
-  EA.registrarTrilha({
-    id: 'T2',
-    titulo: 'Relações métricas no triângulo retângulo',
-    descricao: 'Altura, projeções e catetos: qual relação usar e como conferir por Pitágoras.',
-    emBreve: true,
-    etapas: [],
-  });
-
   const ROTULO_TEMA = { auto: '🌓 Automático', claro: '☀️ Claro', escuro: '🌙 Escuro' };
 
   function botaoTema() {
@@ -43,7 +34,7 @@
   function anel(feitas, total) {
     const r = 20, c = 2 * Math.PI * r, f = total ? feitas / total : 0;
     const span = el('span', { class: 'anel', role: 'img', 'aria-label': `${feitas} de ${total} etapas concluídas` });
-    span.innerHTML = `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" class="anel-fundo"/><circle cx="24" cy="24" r="${r}" class="anel-cheio" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 24 24)"/></svg><b>${feitas}/${total}</b>`;
+    span.innerHTML = `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" class="anel-fundo"/>${f ? `<circle cx="24" cy="24" r="${r}" class="anel-cheio" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 24 24)"/>` : ''}</svg><b>${feitas}/${total}</b>`;
     return span;
   }
 

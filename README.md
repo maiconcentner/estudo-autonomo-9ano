@@ -11,7 +11,9 @@ Segue os princípios dos projetos *Relações Métricas Dinâmicas* e *Fábrica 
 | 1. Produtos notáveis | 1A | D14 | Quadrado da soma e da diferença: as duas peças do meio (erro de 54% na Semana 2). Começa com números e quadradinhos, depois letras; exemplo resolvido, você completa, sozinho. Teste de entrada com 3 itens; quem acerta tudo pula. |
 | | 1B | D09 | Diferença de quadrados (erro de 52% na Semana 3): pátio com canteiro, explorador com tabela dos valores testados, o L que vira retângulo em 9 passos com as medidas, cartões de contraste um por vez, exemplo resolvido, você completa e escada de prática. |
 | | 1C | D09 e D14 | Questões misturadas e geradas na hora. Termina com 4 acertos de primeira nas últimas 5, incluindo 1 questão de comparar e 1 conferência com número. |
-| 2. Relações métricas | em breve | D27 | |
+| 2. Relações métricas | 2A | D27 | Conhecer o triângulo: nomes com figura, a "sombra do cateto" (projeção) e desafios de tocar no segmento certo, com figuras giradas e espelhadas; termina com 3 acertos de primeira seguidos. |
+| | 2B | D27 | De onde vêm as relações: a altura corta o triângulo em três semelhantes, que giram e viram um passo por toque; proporções com lados correspondentes destacados; como escolher a relação. |
+| | 2C | D27 | Calcular e conferir: exemplo resolvido, você completa, a ponte com a armadilha da altura (erro de 40%), Bruno, caminho ao contrário, decimais; treino misto até 4 de 5, com 2 pedindo cateto. |
 
 A conferência de cada ponto do diagnóstico está em [`docs/analise-didatica.md`](docs/analise-didatica.md).
 
@@ -25,6 +27,8 @@ A conferência de cada ponto do diagnóstico está em [`docs/analise-didatica.md
 - Dicas em três degraus: pista, pista maior e solução comentada. Dicas não tiram pontos.
 - Respostas certas pedem uma conferência com número, que é o hábito que derruba o erro principal.
 - No fim de cada etapa aparece um **código de conclusão** (por exemplo, `1B-0910-MA`) para mostrar ao professor.
+
+A trilha 2 usa a notação do livro (cap. 6, *Movimento do aprender*) e do projeto *Relações Métricas Dinâmicas*: $a$ hipotenusa, $b = AC$, $c = AB$, $h = AH$, $m = BH$ (projeção de $c$) e $n = HC$ (projeção de $b$). As cenas (telhado com caibros, viga e pontalete; torre com cabos; praça) usam os mesmos nomes do projeto.
 
 ## Área do professor
 
@@ -53,10 +57,11 @@ js/figuras.js   figuras SVG animadas (peças, pátio, L que vira retângulo)
 js/item.js      itens com retorno por erro e dicas
 js/licao.js     motor das etapas e tipos de tela
 js/trilha1.js   conteúdo da trilha 1 e geradores de questões da 1C
+js/trilha2.js   conteúdo da trilha 2 (relações métricas) e geradores do treino da 2C
 js/app.js       página inicial, área do professor e rotas
 ```
 
-Para criar uma nova trilha, escreva um arquivo como `js/trilha1.js` e chame `EA.registrarTrilha({...})` com as etapas e as telas. Tipos de tela disponíveis: `texto`, `regra`, `anim`, `passos`, `item`, `widget`, `teste`, `cartoes`, `dominio` e `fim`.
+Para criar uma nova trilha, escreva um arquivo como `js/trilha1.js` e chame `EA.registrarTrilha({...})` com as etapas e as telas. Tipos de tela disponíveis: `texto`, `regra`, `anim`, `passos`, `item`, `widget`, `teste`, `cartoes`, `toque`, `dominio` e `fim`.
 
 ## Testar localmente
 
